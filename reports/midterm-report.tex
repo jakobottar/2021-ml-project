@@ -1,0 +1,73 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{article}
+\usepackage[margin=1in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb,amsfonts, fancyhdr, color, comment, graphicx, environ, float}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage[shortlabels]{enumitem}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage{xcolor}
+\usepackage{listings}
+\definecolor{mygray}{rgb}{0.8,0.8,0.8}
+\lstset{%
+basicstyle=\ttfamily,
+breaklines = true,
+backgroundcolor=\color{mygray},
+}
+\usepackage{realboxes}
+\usepackage{subcaption}
+
+\setlength{\parindent}{0cm}
+
+\pagestyle{fancy}
+
+\newenvironment{problem}[2][Problem]
+    { \begin{mdframed}[backgroundcolor=gray!20] \textbf{#1 #2} \\}
+    {  \end{mdframed}}
+
+% Define solution environment
+\newenvironment{solution}{\noindent\textbf{Solution}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Fill in the appropriate information below
+\lhead{Jakob Johnson, u0972673}
+\rhead{CS xxxx - Virtual Virtual Machines} 
+\chead{\textbf{Homework}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+    \section{Linear Classifier}
+
+    \section{AdaBoost}
+            
+\end{document}
+
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}{0.4\textwidth}
+%         \includegraphics[width=\linewidth]{./img/1.png} 
+%         \caption{1}
+%     \end{subfigure}
+%     \begin{subfigure}{0.4\textwidth}
+%         \includegraphics[width=\linewidth,]{./img/2.png}
+%         \caption{2}
+%     \end{subfigure}
+%     \begin{subfigure}{0.4\textwidth}
+%         \includegraphics[width=\linewidth]{./img/3.png} 
+%         \caption{3}
+%     \end{subfigure}
+%     \begin{subfigure}{0.4\textwidth}
+%         \includegraphics[width=\linewidth,]{./img/4.png}
+%         \caption{4}
+%     \end{subfigure}
+
+%     \caption{Examples of images}
+% \end{figure}
