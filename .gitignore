@@ -1,5 +1,7 @@
 __pycache__
 ml/
 
+*.csv
+
 *.pdf
 *.log
