@@ -5,6 +5,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
 # import helper
 
+print("loading training data...")
 raw_train = pd.read_csv("./data/train.csv")
 
 # got info on categorical data handling from 
@@ -27,15 +28,18 @@ for col in object_cols:
 Xs_train = train.drop('income>50K', axis=1)
 ys_train = train['income>50K']
 
-# create Adaboost Classifier and do 5-fold CV
+# create AdaBoost Classifier and do 5-fold CV
+print("5-fold cross-validation...")
 clf = AdaBoostClassifier(n_estimators=500)
-cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=5, n_jobs=-1)
-print(f"cross-val accuracy: {cv_acc.mean()}")
+cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=2, n_jobs=-1)
+print(f"### cross-val accuracy: {cv_acc.mean()}")
 
 # train on full training dataset
+print("training final version...")
 clf = clf.fit(Xs_train, ys_train)
 
 ### Make Submission from test.csv
+print("loading testing data...")
 raw_test = pd.read_csv("./data/test.csv")
 
 test = raw_test.copy()
@@ -47,10 +51,11 @@ for col in object_cols:
     test.drop(col, axis=1, inplace=True)
 
 #predict resulting values
+print("predicting from testing data...")
 pred_test = clf.predict(test)
 
 data = {'ID': list(range(1, len(pred_test)+1)),
         'Prediction': pred_test}
 out = pd.DataFrame(data)
 
-out.to_csv("./submissions/adaboost_submit.csv", index=False)
+out.to_csv("./submissions/rf_submit.csv", index=False)
