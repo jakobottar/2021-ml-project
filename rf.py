@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt
 # import helper
 
 print("loading training data...")
@@ -30,12 +31,32 @@ ys_train = train['income>50K']
 
 # create Random Forest Classifier and do 5-fold CV
 print("5-fold cross-validation...")
-clf = RandomForestClassifier(n_estimators=500)
-cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=2, n_jobs=-1)
-print(f"### cross-val accuracy: {cv_acc.mean()}")
+xs = range(1, 750, 10)
+scores = []
+max_score = -1
+best_x = 0
+
+for x in xs:
+    print(x)
+    clf = RandomForestClassifier(n_estimators=x)
+    cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=5, n_jobs=-1)
+    scores.append(cv_acc.mean())
+    if cv_acc.mean() > max_score: 
+        max_score = cv_acc.mean()
+        best_x = x
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax.plot(xs, scores, color = 'tab:orange', label = "training accuracy")
+ax.legend()
+ax.set_xlabel("# of estimators")
+ax.set_ylabel("Accuracy")
+
+plt.savefig("./reports/img/rf_acc.png")
 
 # train on full training dataset
 print("training final version...")
+clf = RandomForestClassifier(n_estimators=best_x)
 clf = clf.fit(Xs_train, ys_train)
 
 ### Make Submission from test.csv
