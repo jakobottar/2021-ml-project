@@ -55,7 +55,7 @@ ax.set_ylabel("Accuracy")
 plt.savefig("./reports/img/rf_acc.png")
 
 # train on full training dataset
-print("training final version...")
+print(f"training final version with {best_x} classifiers...")
 clf = RandomForestClassifier(n_estimators=best_x)
 clf = clf.fit(Xs_train, ys_train)
 
