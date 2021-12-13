@@ -184,6 +184,9 @@ plt.savefig("./reports/img/native-country.png")
 plt.close()
 
 # income>50k - Binary #################################
+
+print(raw_train['income>50K'].value_counts())
+
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 values = raw_train['income>50K'].value_counts().index
