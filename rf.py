@@ -31,7 +31,8 @@ ys_train = train['income>50K']
 
 # create Random Forest Classifier and do 5-fold CV
 print("5-fold cross-validation...")
-xs = range(1, 750, 10)
+xs = np.arange(0, 810, 10)
+xs[0] = 1
 scores = []
 max_score = -1
 best_x = 0
