@@ -6,6 +6,12 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
+def one_hot(x):
+    num_classes = len(np.unique(x))
+    targets = x[np.newaxis].reshape(-1)
+    one_hot_targets = np.eye(num_classes)[targets]
+    return one_hot_targets.astype(np.float32)
+
 class RegressionDataset(Dataset):
     def __init__(self, datafile, label_col):
         raw = pd.read_csv(datafile)
@@ -30,7 +36,7 @@ class RegressionDataset(Dataset):
             ys = data[label_col]
 
         self.xs = np.array(xs, dtype=np.float32)
-        self.ys = np.array(ys, dtype=np.float32)
+        self.ys = one_hot(np.array(ys, dtype=int))
     
     def __len__(self):
         return len(self.xs)
@@ -62,8 +68,11 @@ def train(dataloader, model, loss_fn, optimizer):
     return train_loss
 
 def comparison(pred, target):
-    # print(pred.astype(int))
-    return np.sum(pred.astype(int) == target)
+    pred = pred.round()
+    print(pred.astype(int))
+    print(target)
+    print("\n")
+    return np.sum(pred == target)
 
 def test(dataloader, model, loss_fn):
     num_batches = len(dataloader)
@@ -128,7 +137,7 @@ for width in widths:
                 self.body = nn.ModuleList([])
                 for i in range(depth-2):
                     self.body.append(nn.Sequential(nn.Linear(width, width), nn.LeakyReLU()))
-                self.out = nn.Sequential(nn.Linear(width, 1))
+                self.out = nn.Sequential(nn.Linear(width, 2), nn.Sigmoid())
 
             def forward(self, x):
                 x = self.input(x)
@@ -141,10 +150,11 @@ for width in widths:
         model.apply(init_xavier)
 
         loss_fn = nn.MSELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+        # loss_fn = nn.CrossEntropyLoss()
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
         
         train_losses = np.array([])
-        epochs = 75
+        epochs = 100
         for t in range(epochs):
             print(f"epoch {t+1}", end=' ')
             epoch_losses = train(train_dataloader, model, loss_fn, optimizer)
