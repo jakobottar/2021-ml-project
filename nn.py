@@ -116,7 +116,7 @@ def predict(dataloader, model):
     return res
 # Define model
 DEPTH = 13
-WIDTH = 125
+WIDTH = 50
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()

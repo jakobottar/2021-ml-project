@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
@@ -33,7 +33,7 @@ ys_train = train['income>50K']
 
 # create Random Forest Classifier and do 5-fold CV
 print("5-fold cross-validation...")
-xs = np.arange(0, 810, 10)
+xs = np.arange(0, 460, 10)
 xs[0] = 1
 scores = []
 max_score = -1
@@ -42,7 +42,7 @@ best_x = 0
 print(Xs_train)
 
 for x in xs:
-    clf = make_pipeline(StandardScaler(),RandomForestClassifier(n_estimators=x, class_weight='balanced'))
+    clf = make_pipeline(StandardScaler(),GradientBoostingClassifier(n_estimators=x))
     cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=5, n_jobs=-1)
     scores.append(cv_acc.mean())
     print(f"{x}: {cv_acc.mean():>4f}")
@@ -57,11 +57,11 @@ ax.legend()
 ax.set_xlabel("# of estimators")
 ax.set_ylabel("Accuracy")
 
-plt.savefig("./reports/img/rf_acc.png")
+plt.savefig("./reports/img/gbm_acc.png")
 
 # train on full training dataset
 print(f"training final version with {best_x} classifiers...")
-clf = RandomForestClassifier(n_estimators=best_x, class_weight='balanced')
+clf = make_pipeline(StandardScaler(),GradientBoostingClassifier(n_estimators=x))
 clf = clf.fit(Xs_train, ys_train)
 
 ### Make Submission from test.csv
@@ -84,4 +84,4 @@ data = {'ID': list(range(1, len(pred_test)+1)),
         'Prediction': pred_test}
 out = pd.DataFrame(data)
 
-out.to_csv("./submissions/rf_submit.csv", index=False)
+out.to_csv("./submissions/gbm_submit.csv", index=False)
