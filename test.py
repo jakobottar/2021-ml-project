@@ -1,18 +1,19 @@
 import numpy as np
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
 
-labs = np.array([0., 1., 0.001, 0.49, 0.51, 0.999])
+raw = pd.read_csv('./data/data-head.csv')
+obj_only = raw.select_dtypes('object')
 
-print(labs)
-print(labs.round())
-labs = labs.round()
-print(labs.astype(int))
+s = (raw.dtypes == 'object')
+object_cols = list(s[s].index)
 
-# print()
+ohe = OneHotEncoder(handle_unknown='ignore', drop='if_binary')
+ohe.fit(obj_only)
 
-# def one_hot(x):
-#     num_classes = len(np.unique(x))
-#     targets = x[np.newaxis].reshape(-1)
-#     one_hot_targets = np.eye(num_classes)[targets]
-#     return one_hot_targets
+encoded = ohe.transform(obj_only).toarray()
+feature_names = ohe.get_feature_names(object_cols)
 
-# print(one_hot(labs))
+data = pd.concat([raw.select_dtypes(exclude='object'), 
+                  pd.DataFrame(encoded,columns=feature_names).astype(int)], axis=1)
+print(data)

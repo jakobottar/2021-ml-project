@@ -1,31 +1,53 @@
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder
-import matplotlib.pyplot as plt
 import torch
 from torch import nn
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from torch.utils.data import DataLoader, Dataset
+from torchvision import datasets
+from torchvision.transforms import ToTensor, Lambda, Compose
+import matplotlib.pyplot as plt
 
-def one_hot(x):
-    num_classes = len(np.unique(x))
-    targets = x[np.newaxis].reshape(-1)
-    one_hot_targets = np.eye(num_classes)[targets]
-    return one_hot_targets.astype(np.float32)
+batch_size = 10
+
+# Get cpu or gpu device for training.
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using {device} device")
 
 class RegressionDataset(Dataset):
-    def __init__(self, datafile, label_col):
+    def __init__(self, datafile, label_col, drop_col = None, encoder = "ohe"):
         raw = pd.read_csv(datafile)
 
-        s = (raw.dtypes == 'object')
-        object_cols = list(s[s].index)
+        if drop_col:
+            for col in drop_col:
+                raw.drop(col, axis=1, inplace=True)
 
-        le = LabelEncoder()
-        data = raw.copy()
+        if encoder == 'ohe':
+            obj_only = raw.select_dtypes('object')
 
-        # LabelEncode the categorical variables
-        for col in object_cols:
-            data[col+'num'] = le.fit_transform(data[col])
-            data.drop(col, axis=1, inplace=True)
+            s = (raw.dtypes == 'object')
+            object_cols = list(s[s].index)
+
+            ohe = OneHotEncoder(handle_unknown='ignore', drop='if_binary')
+            ohe.fit(obj_only)
+
+            encoded = ohe.transform(obj_only).toarray()
+            feature_names = ohe.get_feature_names_out(object_cols)
+
+            data = pd.concat([raw.select_dtypes(exclude='object'), 
+                    pd.DataFrame(encoded,columns=feature_names).astype(int)], axis=1)
+        
+        if encoder == 'le':
+            le = LabelEncoder()
+            data = raw.copy()
+
+            s = (raw.dtypes == 'object')
+            object_cols = list(s[s].index)
+
+            # LabelEncode the categorical variables
+            for col in object_cols:
+                data[col+'num'] = le.fit_transform(data[col])
+                data.drop(col, axis=1, inplace=True)
 
         # create Features/Labels dfs
         if label_col == None:
@@ -36,7 +58,7 @@ class RegressionDataset(Dataset):
             ys = data[label_col]
 
         self.xs = np.array(xs, dtype=np.float32)
-        self.ys = one_hot(np.array(ys, dtype=int))
+        self.ys = np.array(ys, dtype=int)
     
     def __len__(self):
         return len(self.xs)
@@ -47,67 +69,82 @@ class RegressionDataset(Dataset):
         return x, y
 
 def train(dataloader, model, loss_fn, optimizer):
+    size = len(dataloader.dataset)
     model.train()
-    train_loss = []
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(device), y.to(device)
 
         # Compute prediction error
         pred = model(X)
-        loss = loss_fn(torch.reshape(pred, y.shape), y)
+        loss = loss_fn(pred, y)
 
         # Backpropagation
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        if batch % 10 == 0:
-            train_loss.append(loss.item())
-
-    print(f"training error: {np.mean(train_loss):>8f}")
-    return train_loss
-
-def comparison(pred, target):
-    pred = pred.round()
-    print(pred.astype(int))
-    print(target)
-    print("\n")
-    return np.sum(pred == target)
+        if batch % 500 == 0:
+            # print("pred: ", pred.argmax(1).cpu().numpy())
+            # print("targ: ", y.cpu().numpy())
+            loss, current = loss.item(), batch * len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 def test(dataloader, model, loss_fn):
+    size = len(dataloader.dataset)
     num_batches = len(dataloader)
     model.eval()
-    test_loss, accuracy = 0, 0
+    test_loss, correct = 0, 0
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
-
             pred = model(X)
-
-            test_loss += loss_fn(torch.reshape(pred, y.shape), y).item()
-            accuracy += comparison(torch.reshape(pred, y.shape).cpu().numpy(), y.cpu().numpy())
+            test_loss += loss_fn(pred, y).item()
+            correct += (pred.argmax(1) == y).type(torch.int).sum().item()
     test_loss /= num_batches
-    accuracy /= len(dataloader.dataset)
-    print(f"test error: {test_loss:>8f} \n accuracy: {accuracy}\n")
-    return test_loss
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    return correct
 
-# Get cpu or gpu device for training.
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using {device} device")
+def predict(dataloader, model):
+    model.eval()
+    res = np.array([])
+    with torch.no_grad():
+        for X, _ in dataloader:
+            X = X.to(device)
+            pred = model(X)
+            res = np.append(res, pred.argmax(1).cpu().numpy())
+    return res
+# Define model
+DEPTH = 13
+WIDTH = 125
+class NeuralNetwork(nn.Module):
+    def __init__(self):
+        super(NeuralNetwork, self).__init__()
+        self.input = nn.Sequential(nn.Linear(14, WIDTH), nn.LeakyReLU())
+        self.body = nn.ModuleList([])
+        for i in range(DEPTH-2):
+            self.body.append(nn.Linear(WIDTH, WIDTH))
+            self.body.append(nn.LeakyReLU())
+        self.out = nn.Linear(WIDTH, 2)
 
-train_data = RegressionDataset('./data/train.csv', 'income>50K')
-test_data = RegressionDataset('./data/test.csv', None) # TODO: handle test data's lack of label col
+    def forward(self, x):
+        x = self.input(x)
+        for layer in self.body:
+            x = layer(x)
+        res = self.out(x)
+        return res
+
+# Create datasets
+train_data = RegressionDataset('./data/train.csv', 'income>50K', encoder='le')
+test_data = RegressionDataset('./data/test.csv', None, drop_col=['ID'], encoder='le')
 
 # Create data loaders.
-batch_size = 10
 train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=batch_size)
 
-for x, y in train_dataloader:
-    print("x:", x)
-    print("x.shape:", x.shape)
-    print("y:", y)
-    print("y.shape:", y.shape)
+for X, y in train_dataloader:
+    print("Shape of X: ", X.shape)
+    print("Shape of y: ", y.shape, y.dtype)
     break
 
 def init_xavier(m):
@@ -115,59 +152,38 @@ def init_xavier(m):
         nn.init.xavier_normal_(m.weight)
         m.bias.data.fill_(0.01)
 
-def init_he(m):
-    if isinstance(m, nn.Linear):
-        nn.init.kaiming_normal_(m.weight)
-        m.bias.data.fill_(0.01)
+model = NeuralNetwork().to(device)
+model.apply(init_xavier)
+print(model)
 
-# widths = [14, 25, 50, 100, 150]
-widths = [25]
-# depths = [5, 9, 13]
-depths = [9]
+# perc 0 in trianing data: 0.75936
+weights = [1-0.75936, 0.75936]
+class_weights = torch.FloatTensor(weights).to(device)
+loss_fn = nn.CrossEntropyLoss(weight=class_weights)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
-for width in widths:
-    for depth in depths:
+best_model = model
+best_acc = 0
 
-        print(f"{depth}-deep, {width}-wide network:\n-------------------------------")
-        # Define model
-        class NeuralNetwork(nn.Module):
-            def __init__(self):
-                super(NeuralNetwork, self).__init__()
-                self.input = nn.Sequential(nn.Linear(14, width), nn.LeakyReLU())
-                self.body = nn.ModuleList([])
-                for i in range(depth-2):
-                    self.body.append(nn.Sequential(nn.Linear(width, width), nn.LeakyReLU()))
-                self.out = nn.Sequential(nn.Linear(width, 2), nn.Sigmoid())
+epochs = 25
+for t in range(epochs):
+    print(f"Epoch {t+1}\n-------------------------------")
+    train(train_dataloader, model, loss_fn, optimizer)
+    acc = test(train_dataloader, model, loss_fn)
+    if acc > best_acc:
+        best_acc = acc
+        best_model = model
+print(f"Our best training accuracy was {(100*best_acc):>0.1f}%")
+filename = "./out/model.pth"
+torch.save(model, filename)
+print(f"saved model to {filename}")
 
-            def forward(self, x):
-                x = self.input(x)
-                for layer in self.body:
-                    x = layer(x)
-                res = self.out(x)
-                return res
+# model = torch.load(filename).to(device)
+pred_test = predict(test_dataloader, best_model)
 
-        model = NeuralNetwork().to(device)
-        model.apply(init_xavier)
+data = {'ID': list(range(1, len(pred_test)+1)),
+        'Prediction': pred_test}
+out = pd.DataFrame(data)
 
-        loss_fn = nn.MSELoss()
-        # loss_fn = nn.CrossEntropyLoss()
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
-        
-        train_losses = np.array([])
-        epochs = 100
-        for t in range(epochs):
-            print(f"epoch {t+1}", end=' ')
-            epoch_losses = train(train_dataloader, model, loss_fn, optimizer)
-            train_losses = np.append(train_losses, epoch_losses)
-
-        fig, ax = plt.subplots()
-        ax.plot(train_losses)
-        ax.set_title(f"PyTorch: {depth}-deep, {width}-wide network")
-        ax.set_xlabel("iteration")
-        ax.set_ylabel("squared error")
-        plt.savefig(f"./out/torch_d{depth}_w{width}.png")
-        plt.close()
-        
-        test(train_dataloader, model, loss_fn) # all zeroes: 0.75936
-
-print("Done!\nPlots saved in './out/'")
+out.to_csv("./submissions/nn_submit.csv", index=False)
+print("Done!")

@@ -33,18 +33,22 @@ for col in object_cols:
 Xs_train = train.drop('income>50K', axis=1)
 ys_train = train['income>50K']
 
-weights = {0 : 0.25,
-           1 : 0.75}
+kernels = ['linear', 'poly', 'rbf', 'sigmoid']
+best_kernel, best_acc = 'none', 0
 
-# create AdaBoost Classifier and do 5-fold CV
-print("5-fold cross-validation...")
-svc = make_pipeline(StandardScaler(), SVC(class_weight='balanced'))
-print(svc)
-cv_acc = cross_val_score(svc, Xs_train, ys_train, cv=5, n_jobs=-1)
-print(cv_acc.mean())
+for kernel in kernels:
+    # create AdaBoost Classifier and do 5-fold CV
+    print("5-fold cross-validation...")
+    svc = make_pipeline(StandardScaler(), SVC(class_weight='balanced', kernel=kernel, gamma='auto'))
+    print(svc)
+    cv_acc = cross_val_score(svc, Xs_train, ys_train, cv=5, n_jobs=-1)
+    if cv_acc.mean() > best_acc:
+        best_acc = cv_acc.mean()
+        best_kernel = kernel
+    print(cv_acc.mean())
 
-print("training on full dataset...")
-svc_final = make_pipeline(StandardScaler(), SVC(class_weight='balanced'))
+print(f"training on full dataset with {best_kernel} kernel...")
+svc_final = make_pipeline(StandardScaler(), SVC(class_weight='balanced', kernel='rbf'))
 svc_final = svc_final.fit(Xs_train, ys_train)
 
 ### Make Submission from test.csv

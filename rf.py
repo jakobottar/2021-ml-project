@@ -15,8 +15,6 @@ raw_train = pd.read_csv("./data/train.csv")
 # https://analyticsindiamag.com/complete-guide-to-handling-categorical-data-using-scikit-learn/
 
 train = raw_train.copy()
-# train.drop('education.num', axis=1, inplace=True) # I drop this because I want to do the conversion myself
-# train.drop('native.country', axis=1, inplace=True)
 
 # determine categorical variables
 s = (train.dtypes == 'object')
@@ -65,14 +63,13 @@ plt.savefig("./reports/img/rf_acc.png")
 print(f"training final version with {best_x} classifiers...")
 clf = RandomForestClassifier(n_estimators=best_x)
 clf = clf.fit(Xs_train, ys_train)
-print(clf.feature_importances_)
 
 ### Make Submission from test.csv
 print("loading testing data...")
 raw_test = pd.read_csv("./data/test.csv")
 
 test = raw_test.copy()
-# test.drop(['education.num', 'ID'], axis=1, inplace=True)
+test.drop('ID', axis=1, inplace=True)
 
 # LabelEncode the categorical variables
 for col in object_cols:
