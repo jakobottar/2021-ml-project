@@ -47,7 +47,7 @@ for kernel in kernels:
         best_kernel = kernel
     print(cv_acc.mean())
 
-print(f"training on full dataset with {best_kernel} kernel...")
+print(f"training on full dataset with rbf kernel...")
 svc_final = make_pipeline(StandardScaler(), SVC(class_weight='balanced', kernel='rbf'))
 svc_final = svc_final.fit(Xs_train, ys_train)
 

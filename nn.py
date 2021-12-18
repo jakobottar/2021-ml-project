@@ -70,6 +70,7 @@ class RegressionDataset(Dataset):
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
+    losses = []
     model.train()
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(device), y.to(device)
@@ -83,11 +84,16 @@ def train(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
+        if batch % 10 == 0:
+            losses.append(loss.item())
+
         if batch % 500 == 0:
             # print("pred: ", pred.argmax(1).cpu().numpy())
             # print("targ: ", y.cpu().numpy())
+            
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+    return losses
 
 def test(dataloader, model, loss_fn):
     size = len(dataloader.dataset)
@@ -164,15 +170,27 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
 best_model = model
 best_acc = 0
+all_losses = np.array([])
 
 epochs = 25
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
-    train(train_dataloader, model, loss_fn, optimizer)
+    losses = train(train_dataloader, model, loss_fn, optimizer)
+    all_losses = np.append(all_losses, losses)
     acc = test(train_dataloader, model, loss_fn)
     if acc > best_acc:
         best_acc = acc
         best_model = model
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax.plot(all_losses, color = 'tab:orange', label = "training loss")
+ax.legend()
+ax.set_xlabel("iteration")
+ax.set_ylabel("Cross Entropy Loss")
+
+plt.savefig("./reports/img/nn_loss.png")
+
 print(f"Our best training accuracy was {(100*best_acc):>0.1f}%")
 filename = "./out/model.pth"
 torch.save(model, filename)

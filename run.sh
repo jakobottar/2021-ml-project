@@ -17,4 +17,7 @@ python lr.py
 echo "running Neural Net"
 python nn.py
 
+echo "running Gradient Boosting Machines"
+python gbm.py
+
 # kaggle competitions submit -c ilp2021f -f submission.csv -m "Message"

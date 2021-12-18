@@ -41,10 +41,10 @@ max_score = -1
 best_x = 0
 
 for x in xs:
-    print(x)
     clf = AdaBoostClassifier(n_estimators=x)
     cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=5, n_jobs=-1)
     scores.append(cv_acc.mean())
+    print(f"{x}: {cv_acc.mean():>4f}")
     if cv_acc.mean() > max_score: 
         max_score = cv_acc.mean()
         best_x = x
