@@ -197,3 +197,29 @@ ax.set_xlabel('Label: income>50K')
 plt.savefig("./reports/img/income>50K.png")
 # plt.show()
 plt.close()
+
+# Results Plot #################################
+
+res = pd.read_csv("./submissions/results.txt")
+print(res)
+
+x = np.arange(len(res['method'].unique()))
+fig, ax = plt.subplots(figsize=(8, 6))
+
+# Define bar width. We'll use this to offset the second bar.
+bar_width = 0.4
+
+# Note we add the `width` parameter now which sets the width of each bar.
+b1 = ax.bar(x, res['training_acc'], width=bar_width, label = "training accuracy")
+b2 = ax.bar(x+bar_width, res['testing_acc'], width=bar_width, label = "testing accuracy")
+ax.set_xticks(x + bar_width / 2)
+ax.set_xticklabels(res['method'].unique())
+plt.xticks(rotation=90, ha='right')
+plt.subplots_adjust(bottom=0.25)
+ax.legend()
+ax.set_ylabel('Accuracy')
+ax.set_xlabel('Model')
+
+plt.savefig("./reports/img/results.png")
+# plt.show()
+plt.close()

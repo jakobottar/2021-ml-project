@@ -1,0 +1,8 @@
+method,training_acc,testing_acc
+AdaBoost,0.8716,0.7326
+Naive Bayes,0.7959,0.6263
+GBM,0.8756,0.8288
+Logistic Reg.,0.7896,0.6107
+Neural Net,0.7990,0.6224
+Random Forest,0.8607,0.7611
+SVM,0.7916,0.8204

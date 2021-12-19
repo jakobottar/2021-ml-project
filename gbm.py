@@ -42,7 +42,7 @@ best_x = 0
 print(Xs_train)
 
 for x in xs:
-    clf = make_pipeline(StandardScaler(),GradientBoostingClassifier(n_estimators=x))
+    clf = GradientBoostingClassifier(n_estimators=x)
     cv_acc = cross_val_score(clf, Xs_train, ys_train, cv=5, n_jobs=-1)
     scores.append(cv_acc.mean())
     print(f"{x}: {cv_acc.mean():>4f}")
@@ -61,13 +61,16 @@ plt.savefig("./reports/img/gbm_acc.png")
 
 # train on full training dataset
 print(f"training final version with {best_x} classifiers...")
-clf = make_pipeline(StandardScaler(),GradientBoostingClassifier(n_estimators=x))
-clf = clf.fit(Xs_train, ys_train)
+clf = GradientBoostingClassifier(n_estimators=x)
+weights = ys_train.copy()
+weights[weights == 1] = 0.75936
+weights[weights == 0] = 1-0.75936
+clf = clf.fit(Xs_train, ys_train, sample_weight=weights)
 
 ### Make Submission from test.csv
 print("loading testing data...")
 raw_test = pd.read_csv("./data/test.csv")
-
+ 
 test = raw_test.copy()
 test.drop('ID', axis=1, inplace=True)
 

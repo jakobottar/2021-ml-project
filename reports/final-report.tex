@@ -110,11 +110,11 @@ The following implementations are available on GitHub: https://github.com/jakobo
 \
 I first tried to fit the model with AdaBoost. I suspected that a simple decision tree would not do well, and AdaBoost should do at least as well as a single tree. I chose the Scikit-learn implementation AdaBoostClassifier. This implementation requires a feature array and a result array that are all numeric, so I had to read in the data with pandas and perform feature mapping to convert the string-formatted categorical variables to numeric variables that the AdaBoost classifier could read. 
 
-After formatting the data, I wanted to determine the best number of classifiers to include in my AdaBoost model, so I ran 5-fold cross-validation on models using 1 to 750 (skipping every 10) classifiers. I stored the number of classifiers with the highest accuracy and plotted the accuracy (figure \ref{fig:adaboost}). We achieved a max training accuracy of approximately 87\%.
+After formatting the data, I wanted to determine the best number of classifiers to include in my AdaBoost model, so I ran 5-fold cross-validation on models using 1 to 750 (skipping every 10) classifiers. I stored the number of classifiers with the highest accuracy and plotted the accuracy (figure \ref{fig:adaboost}). I achieved a max training accuracy of approximately 87\%.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\linewidth]{img/ab_acc.png}
+    \includegraphics[width=0.4\linewidth]{img/ab_acc.png}
     \caption{Adaboost Accuracy vs Number of Classifiers}
     \label{fig:adaboost}
 \end{figure}
@@ -131,7 +131,7 @@ After formatting the data, I again wanted to determine the best number of classi
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\linewidth]{img/rf_acc.png}
+    \includegraphics[width=0.4\linewidth]{img/rf_acc.png}
     \caption{Random Forest Accuracy vs Number of Classifiers}
     \label{fig:rf}
 \end{figure}
@@ -156,7 +156,7 @@ My implementation was based on on my neural net code and architectures from Home
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\linewidth]{img/rf_acc.png}
+    \includegraphics[width=0.4\linewidth]{img/nn_loss.png}
     \caption{Neural Net Training Loss - Final Version}
     \label{fig:nn}
 \end{figure}
@@ -168,27 +168,34 @@ Initially during training, my network would converge to an all-zeros prediction,
 Even after all of these tweaks, I could never break an 80\% training accuracy. The models also had a very poor testing accuracy of 62\% at their peak, showing that they were massively overfitting the data. 
 
 \subsection{Naive Bayes and Logistic Regression}
-I briefly tried implementing Naive Bayes and Logistic Regression classifiers. Their initial accuracies were significantly below that of SVMs and Random Forests so I did not pursue these methods further. Perhaps these could be tuned to perform well in the future, but I did not have enough time. 
+I briefly tried implementing Naive Bayes and Logistic Regression classifiers. Their initial testing accuracies were significantly below that of SVMs and Random Forests so I did not pursue these methods further. Perhaps these could be tuned to perform well in the future, but I did not have enough time. 
 
 \subsection{Gradient Boosting Machines}
 
+Gradient Boosting Machines were a method I saw mentioned in the Scikit Learn documentation and I decided to try it as a final method, using the sklearn GradientBoostingClassifier implementation. I did the same categorical data handling as in the other Sklearn methods. After trying a range of different numbers of estimators in the ensemble method, I trained the model on the whole training dataset, using sample weights to achieve a balanced class weight scheme. It achieved a maximum training accuracy of 87.56\% which was the highest recorded so far, and a testing accuracy of 82.88\% which was also the best so far. I briefly tried tuning some paramemters but nothing was able to improve the accuracy. 
+
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\linewidth]{img/gbm_acc.png}
+    \includegraphics[width=0.4\linewidth]{img/gbm_acc.png}
     \caption{Gradient Boosting Classifier Accuracy vs Number of Classifiers}
     \label{fig:gbm}
 \end{figure}
 
 \section{Conclusion}
 
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.6\linewidth]{img/gbm_acc.png}
-%     \caption{Accuracy Comparison of different models}
-%     \label{fig:overall_acc}
-% \end{figure}
+I achieved a pretty good maximum score of 82.88\% using Gradient Boosting Machines, and explored many different models with different approaches. Figure \ref{fig:overall_acc} shows all the training and testing accuracies of the different models.
 
-\section{Further Work}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\linewidth]{img/results.png}
+    \caption{Accuracy Comparison of different models}
+    \label{fig:overall_acc}
+\end{figure}
+
+The ensemble methods did fairly well, but the difference in training and testing error shows they often overfit the data. The others did not seem to be properly modeling the data, with low training and very low testing accuracies. I am dissapointed in the neural net results, I still think that I could have gotten much higher accuracy with the neural net model, but it needs significantly more tuning and probably a very different architecture. 
+
+\subsection{Future Work}
+If I had additional time I would try more neural net architectures and hyperparameters. Briefly talking to other students, they had significantly better results than me with the neural net. I could also take a more statistical approach and do some correlation analysis of the variables and potentially create additional variables out of combinations of the existing ones. I would also do more research on how to handle unbalanced datasets like this one.
 
 
 \end{document}
